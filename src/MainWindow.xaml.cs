@@ -19,7 +19,7 @@ namespace ZClock
         {
             InitializeComponent();
 
-            SetNextLockTime();
+            SetNextLockTime(true);
             timer_lockScreen.Interval = TimeSpan.FromSeconds(5);
             timer_lockScreen.Tick += TimerLockScreenTick;
             timer_lockScreen.Start();
@@ -36,13 +36,15 @@ namespace ZClock
         private readonly Random rnd = new Random();
 
         /// <summary>
-        /// 跳过交易时段，然后随机50-60分钟休息一次
+        /// 跳过交易时段，然后随机一段时间间隔休息一次
+        /// 初始化时时间间隔需要短一点
         /// </summary>
-        private void SetNextLockTime()
+        private void SetNextLockTime(bool isInit)
         {
             m_nextLockTime = DateTime.Now;
+            int span = isInit ? 5 : 50;
             while (IsTradingHour(m_nextLockTime))
-                m_nextLockTime = m_nextLockTime.AddMinutes(rnd.Next(50, 60));
+                m_nextLockTime = m_nextLockTime.AddMinutes(span + rnd.Next(10));
             tbMsg.Text = "下一次休息时间：" + m_nextLockTime.ToString("HH:mm:ss");
         }
 
@@ -76,7 +78,7 @@ namespace ZClock
             else if (m_nextLockTime <= now && now <= m_nextLockTime.AddMinutes(1))
                 LockWorkStation();
             else
-                SetNextLockTime();
+                SetNextLockTime(false);
         }
 
         #endregion
@@ -96,9 +98,23 @@ namespace ZClock
             WindowState = WindowState.Normal;
         }
 
+        private bool user_exit;
+
+        private void btnClose_OnClick(object sender, RoutedEventArgs e)
+        {
+            user_exit = true;
+            Close();
+        }
+
         private void MainWindow_OnClosing(object sender, CancelEventArgs e)
         {
-            notifyIcon.Dispose();
+            if (!user_exit)
+            {
+                e.Cancel = true;
+                Hide();
+            }
+            else
+                notifyIcon.Dispose();
         }
     }
 }

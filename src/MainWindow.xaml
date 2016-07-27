@@ -5,5 +5,8 @@
     Title="ZClock" Height="400" Width="600" Icon="tubiao.ico"
     StateChanged="MainWindow_OnStateChanged"
     Closing="MainWindow_OnClosing">
-    <TextBlock Name="tbMsg" Margin="20"></TextBlock>
+    <DockPanel Margin="20">
+        <Button Height="40" Width="80" DockPanel.Dock="Bottom" Click="btnClose_OnClick">Close</Button>
+        <TextBlock Name="tbMsg" Margin="20" />
+    </DockPanel>
 </Window>
