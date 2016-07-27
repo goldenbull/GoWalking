@@ -41,10 +41,12 @@ namespace ZClock
         /// </summary>
         private void SetNextLockTime(bool isInit)
         {
+            int span = isInit ? 20 : 50;
             m_nextLockTime = DateTime.Now;
-            int span = isInit ? 5 : 50;
-            while (IsTradingHour(m_nextLockTime))
+            do
+            {
                 m_nextLockTime = m_nextLockTime.AddMinutes(span + rnd.Next(10));
+            } while (IsTradingHour(m_nextLockTime));
             tbMsg.Text = "下一次休息时间：" + m_nextLockTime.ToString("HH:mm:ss");
         }
 
@@ -76,7 +78,10 @@ namespace ZClock
             if (now < m_nextLockTime)
                 return;
             else if (m_nextLockTime <= now && now <= m_nextLockTime.AddMinutes(1))
+            {
                 LockWorkStation();
+                //Trace.WriteLine($"{now} Lock now!!!");
+            }
             else
                 SetNextLockTime(false);
         }
