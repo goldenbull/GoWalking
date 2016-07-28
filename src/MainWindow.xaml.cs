@@ -43,7 +43,7 @@ namespace ZClock
         {
             var fixed_base = isInit ? 20 : 50;
             m_lockTimepoint = DateTime.Now.AddMinutes(fixed_base + rnd.Next(10));
-            tbMsg.Text = "下一次休息时间：" + m_lockTimepoint.ToString("HH:mm:ss");
+            tbMsg.Text += m_lockTimepoint.ToString("HH:mm:ss") + "\r\n";
         }
 
         private static bool IsTrading(DateTime t)
@@ -62,8 +62,8 @@ namespace ZClock
 
         private void LockScreen()
         {
-            //LockWorkStation();
-            Trace.WriteLine($"debug: {DateTime.Now} lock now");
+            LockWorkStation();
+            //Trace.WriteLine($"debug: {DateTime.Now} lock now");
         }
 
         /// <summary>
