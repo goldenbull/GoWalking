@@ -32,25 +32,21 @@ namespace ZClock
         #region 整点报时
 
         private readonly DispatcherTimer timer_lockScreen = new DispatcherTimer();
-        private DateTime m_nextLockTime;
+        private DateTime m_lockTimepoint;
         private readonly Random rnd = new Random();
 
         /// <summary>
-        /// 跳过交易时段，然后随机一段时间间隔休息一次
+        /// 随机一段时间间隔休息一次
         /// 初始化时时间间隔需要短一点
         /// </summary>
         private void SetNextLockTime(bool isInit)
         {
-            int span = isInit ? 20 : 50;
-            m_nextLockTime = DateTime.Now;
-            do
-            {
-                m_nextLockTime = m_nextLockTime.AddMinutes(span + rnd.Next(10));
-            } while (IsTradingHour(m_nextLockTime));
-            tbMsg.Text = "下一次休息时间：" + m_nextLockTime.ToString("HH:mm:ss");
+            var fixed_base = isInit ? 20 : 50;
+            m_lockTimepoint = DateTime.Now.AddMinutes(fixed_base + rnd.Next(10));
+            tbMsg.Text = "下一次休息时间：" + m_lockTimepoint.ToString("HH:mm:ss");
         }
 
-        private static bool IsTradingHour(DateTime t)
+        private static bool IsTrading(DateTime t)
         {
             int m = t.Hour*100 + t.Minute;
 
@@ -64,10 +60,16 @@ namespace ZClock
         [DllImport("user32")]
         public static extern void LockWorkStation();
 
+        private void LockScreen()
+        {
+            //LockWorkStation();
+            Trace.WriteLine($"debug: {DateTime.Now} lock now");
+        }
+
         /// <summary>
         /// 三种情况：
         /// 1、未到时间点
-        /// 2、已到时间点，且处于一分钟内，属于锁屏状态
+        /// 2、已到时间点，如果是交易时段，则不反复锁屏，否则一分钟内属于锁屏状态
         /// 3、已超过时间点一分钟，可以解锁，配置下一个时间点
         /// </summary>
         /// <param name="sender"></param>
@@ -75,15 +77,22 @@ namespace ZClock
         private void TimerLockScreenTick(object sender, EventArgs e)
         {
             var now = DateTime.Now;
-            if (now < m_nextLockTime)
-                return;
-            else if (m_nextLockTime <= now && now <= m_nextLockTime.AddMinutes(1))
+            if (now < m_lockTimepoint) return;
+
+            // 已经到锁屏时间，区别对待交易时段和非交易时段
+            if (IsTrading(now))
             {
-                LockWorkStation();
-                //Trace.WriteLine($"{now} Lock now!!!");
+                // 交易时段只锁屏一次
+                LockScreen();
+                SetNextLockTime(false);
             }
             else
-                SetNextLockTime(false);
+            {
+                if (now <= m_lockTimepoint.AddMinutes(1))
+                    LockScreen();
+                else
+                    SetNextLockTime(false);
+            }
         }
 
         #endregion
